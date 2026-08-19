@@ -1,4 +1,14 @@
 <title>Dinheiro no Lugar</title>
+<script>
+/* aplica o tema salvo antes da primeira pintura, pra não piscar o
+   tema errado por uma fração de segundo enquanto o resto carrega */
+(function(){
+  try{
+    var t = localStorage.getItem("dinheiro-no-lugar/tema");
+    if(t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
 <style>
 /* ══════════════════════════════════════════════════════════
    Dinheiro no Lugar · planner financeiro para quem faz cestas
@@ -157,6 +167,30 @@ button,input,select,textarea{font:inherit;color:inherit;}
   min-width:8.5rem;text-align:center;
   font-size:.9rem;font-weight:700;text-transform:capitalize;
 }
+
+.temaToggle{
+  flex:none;width:38px;height:38px;
+  border:1px solid var(--line);border-radius:50%;
+  background:var(--surface);box-shadow:var(--sombra);
+  display:grid;place-items:center;cursor:pointer;
+  color:var(--ink-soft);padding:0;
+  transition:background .2s,color .2s,border-color .2s;
+}
+.temaToggle:hover{background:var(--accent-wash);color:var(--accent);}
+.temaToggle__icone{
+  width:18px;height:18px;fill:none;stroke:currentColor;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+/* o ícone mostra pra qual tema o clique leva, não o tema atual:
+   sol = "clique pra clarear", lua = "clique pra escurecer" */
+.temaToggle__sol{display:none;}
+.temaToggle__lua{display:block;}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .temaToggle__sol{display:block;}
+  :root:not([data-theme="light"]) .temaToggle__lua{display:none;}
+}
+:root[data-theme="dark"] .temaToggle__sol{display:block;}
+:root[data-theme="dark"] .temaToggle__lua{display:none;}
 
 /* ── abas ─────────────────────────────────────────────────── */
 .abas{
@@ -494,6 +528,15 @@ main{
       <span class="mes__rotulo" id="mesRotulo">—</span>
       <button type="button" id="mesProximo" aria-label="Próximo mês">›</button>
     </div>
+    <button type="button" class="temaToggle" id="temaToggle" aria-label="Alternar tema claro/escuro">
+      <svg class="temaToggle__icone temaToggle__sol" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.6" />
+        <path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+      </svg>
+      <svg class="temaToggle__icone temaToggle__lua" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 14.3A8.3 8.3 0 1 1 9.7 4a6.6 6.6 0 0 0 10.3 10.3Z" />
+      </svg>
+    </button>
   </div>
   <nav class="abas" role="tablist" aria-label="Seções do planner">
     <button class="aba" role="tab" data-aba="painel"  aria-selected="true">Painel</button>
@@ -1492,6 +1535,46 @@ document.getElementById("btnLimpar").addEventListener("click", () => {
   estado = estruturaNova();
   salvar(); renderConfig(); render();
 });
+
+/* ── tema claro/escuro ────────────────────────────────────── */
+
+const CHAVE_TEMA = "dinheiro-no-lugar/tema";
+
+/* tema "efetivo" é o que está realmente na tela: o escolhido à mão,
+   ou, sem escolha salva, o que o sistema operacional pede */
+function temaEfetivo(){
+  const explicito = document.documentElement.getAttribute("data-theme");
+  if(explicito === "light" || explicito === "dark") return explicito;
+  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function atualizarBotaoTema(){
+  const btn = document.getElementById("temaToggle");
+  if(!btn) return;
+  const vaiPra = temaEfetivo() === "dark" ? "claro" : "escuro";
+  btn.setAttribute("aria-label", `Mudar pro tema ${vaiPra}`);
+}
+
+function aplicarTema(t){
+  if(t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  else document.documentElement.removeAttribute("data-theme");
+  atualizarBotaoTema();
+}
+
+document.getElementById("temaToggle").addEventListener("click", () => {
+  const proximo = temaEfetivo() === "dark" ? "light" : "dark";
+  aplicarTema(proximo);
+  try{ localStorage.setItem(CHAVE_TEMA, proximo); }catch(e){}
+});
+
+/* se não há escolha salva, o botão acompanha o sistema ao vivo —
+   sem isso, o ícone ficaria parado se a pessoa mudar o tema do
+   celular/computador com a página já aberta */
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if(!document.documentElement.getAttribute("data-theme")) atualizarBotaoTema();
+});
+
+atualizarBotaoTema();
 
 /* ── partida ──────────────────────────────────────────────── */
 
