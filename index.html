@@ -1010,23 +1010,34 @@ function renderGrafico(){
   }));
 
   const maximo = Math.max(1, ...dados.map(d => Math.max(d.entrada, d.saida)));
-  const L = 100, A = 62, base = A - 12, topo = 6;
+
+  /* o viewBox precisa estar em unidades próximas do pixel real: o texto
+     usa font-size em px vindo do CSS, e em SVG isso é interpretado dentro
+     do sistema de coordenadas do viewBox — um viewBox minúsculo (ex.: 100
+     de largura) faria um texto de "11px" parecer gigante quando o SVG é
+     esticado por CSS pra caber num cartão de centenas de pixels. Por isso
+     medimos a largura real do contêiner e desenhamos nessa escala. */
+  const alvo = document.getElementById("graficoCaixa");
+  const L = Math.max(260, Math.round(alvo.clientWidth || alvo.getBoundingClientRect().width || 320));
+  const escala = L / 100;
+  const A = 62 * escala, base = A - 12 * escala, topo = 6 * escala;
 
   const grupo = L / meses.length;
   const larguraBarra = grupo * 0.3;
 
+  const gap = escala, arred = Math.min(4, escala * 0.7);
   let barras = "", rotulos = "";
   dados.forEach((d,i) => {
     const centro = grupo * i + grupo/2;
     const hE = ((base - topo) * d.entrada) / maximo;
     const hS = ((base - topo) * d.saida) / maximo;
-    const xE = centro - larguraBarra - 1;
-    const xS = centro + 1;
-    barras += `<rect x="${xE.toFixed(2)}" y="${(base-hE).toFixed(2)}" width="${larguraBarra.toFixed(2)}" height="${Math.max(0,hE).toFixed(2)}" rx="1" fill="var(--in)" />`;
-    barras += `<rect x="${xS.toFixed(2)}" y="${(base-hS).toFixed(2)}" width="${larguraBarra.toFixed(2)}" height="${Math.max(0,hS).toFixed(2)}" rx="1" fill="var(--out)" />`;
+    const xE = centro - larguraBarra - gap;
+    const xS = centro + gap;
+    barras += `<rect x="${xE.toFixed(2)}" y="${(base-hE).toFixed(2)}" width="${larguraBarra.toFixed(2)}" height="${Math.max(0,hE).toFixed(2)}" rx="${arred.toFixed(2)}" fill="var(--in)" />`;
+    barras += `<rect x="${xS.toFixed(2)}" y="${(base-hS).toFixed(2)}" width="${larguraBarra.toFixed(2)}" height="${Math.max(0,hS).toFixed(2)}" rx="${arred.toFixed(2)}" fill="var(--out)" />`;
     const nome = new Date(Number(d.mes.slice(0,4)), Number(d.mes.slice(5,7))-1, 1)
       .toLocaleDateString("pt-BR",{month:"short"}).replace(".","");
-    rotulos += `<text x="${centro.toFixed(2)}" y="${A-2}" text-anchor="middle">${esc(nome)}</text>`;
+    rotulos += `<text x="${centro.toFixed(2)}" y="${(A - 2*escala).toFixed(2)}" text-anchor="middle">${esc(nome)}</text>`;
   });
 
   let grade = "";
@@ -1422,4 +1433,13 @@ ligarCategorias(document.getElementById("formaPessoal"),"pessoal","catPessoal");
 document.querySelectorAll('input[type="date"]').forEach(i => { i.value = hojeISO(); });
 renderConfig();
 render();
+
+/* o gráfico mede a largura real do cartão pra desenhar o texto na escala
+   certa — se a janela mudar de tamanho (girar o celular, redimensionar),
+   redesenha pra não deixar a escala antiga presa */
+let redimensionaEmAndamento = null;
+addEventListener("resize", () => {
+  clearTimeout(redimensionaEmAndamento);
+  redimensionaEmAndamento = setTimeout(renderGrafico, 150);
+});
 </script>
