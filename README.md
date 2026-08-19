@@ -7,12 +7,12 @@ reserva fraca).
 
 ## Arquivo
 
-Tudo está em `_template.html` — um único arquivo HTML/CSS/JS, sem build e
+Tudo está em `index.html` — um único arquivo HTML/CSS/JS, sem build e
 sem dependências externas (as fontes vêm embutidas no próprio arquivo).
 
 ## Como abrir
 
-Basta abrir `_template.html` direto no navegador — não precisa de servidor.
+Basta abrir `index.html` direto no navegador — não precisa de servidor.
 
 ## Como funciona
 
@@ -25,4 +25,6 @@ lançamentos se não houver backup.
 ## Publicar em outro lugar
 
 Como é um arquivo único e estático, também dá para publicar em qualquer
-hospedagem que sirva HTML puro (Netlify, GitHub Pages, Vercel).
+hospedagem que sirva HTML puro (Netlify, GitHub Pages, Vercel). O arquivo
+já se chama `index.html` de propósito — é o nome que essas hospedagens
+esperam encontrar na raiz do projeto para servir como página inicial.
